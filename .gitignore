@@ -1,0 +1,38 @@
+# Secrets and credentials
+.env
+.env.*
+*.key
+*.pem
+*.token
+.secrets/
+secrets/
+credentials/
+*.credential
+
+# OS files
+.DS_Store
+Thumbs.db
+.Spotlight-V100
+.Trashes
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# Build artifacts
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+dist/
+build/
+.cache/
+
+# Logs
+*.log
+logs/
