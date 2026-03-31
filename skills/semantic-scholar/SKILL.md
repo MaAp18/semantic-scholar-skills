@@ -1,5 +1,10 @@
 ---
 name: semantic-scholar
+description: >
+  Search academic literature and retrieve structured paper data using the Semantic Scholar API.
+  Use when an agent needs to find papers by topic or keyword, get paper details by DOI or arXiv ID,
+  traverse citation graphs, look up author profiles, batch-fetch papers by ID list, or get
+  paper recommendations. Covers the Academic Graph API, Recommendations API, and Datasets API.
 ---
 
 # Semantic Scholar Skill
