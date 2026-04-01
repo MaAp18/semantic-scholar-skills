@@ -95,6 +95,24 @@ if [[ -n "${SEMANTIC_SCHOLAR_API_KEY:-}" ]]; then
   AUTH_HEADER="x-api-key: ${SEMANTIC_SCHOLAR_API_KEY}"
 fi
 
+curl_get() {
+  local url="$1"
+  local tmpfile
+  tmpfile=$(mktemp)
+  local args=(-s -o "$tmpfile" -w '%{http_code}')
+  [[ -n "$AUTH_HEADER" ]] && args+=(-H "$AUTH_HEADER")
+  local http_code exit_status=0
+  http_code=$(curl "${args[@]}" "$url")
+  if [[ "$http_code" -lt 200 || "$http_code" -ge 300 ]]; then
+    echo "Error: API request failed (HTTP ${http_code})" >&2
+    exit_status=1
+  else
+    cat "$tmpfile"
+  fi
+  rm -f "$tmpfile"
+  return "$exit_status"
+}
+
 ENCODED_QUERY=$(urlencode "$QUERY")
 
 if [[ "$BULK" == "true" ]]; then
@@ -118,8 +136,4 @@ else
   [[ -n "$VENUE" ]] && URL="${URL}&venue=$(urlencode "$VENUE")"
 fi
 
-if [[ -n "$AUTH_HEADER" ]]; then
-  curl -sf -H "$AUTH_HEADER" "$URL"
-else
-  curl -sf "$URL"
-fi
+curl_get "$URL"

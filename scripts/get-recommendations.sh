@@ -74,21 +74,39 @@ fi
 
 curl_get() {
   local url="$1"
-  if [[ -n "$AUTH_HEADER" ]]; then
-    curl -sf -H "$AUTH_HEADER" "$url"
+  local tmpfile
+  tmpfile=$(mktemp)
+  local args=(-s -o "$tmpfile" -w '%{http_code}')
+  [[ -n "$AUTH_HEADER" ]] && args+=(-H "$AUTH_HEADER")
+  local http_code exit_status=0
+  http_code=$(curl "${args[@]}" "$url")
+  if [[ "$http_code" -lt 200 || "$http_code" -ge 300 ]]; then
+    echo "Error: API request failed (HTTP ${http_code})" >&2
+    exit_status=1
   else
-    curl -sf "$url"
+    cat "$tmpfile"
   fi
+  rm -f "$tmpfile"
+  return "$exit_status"
 }
 
 curl_post() {
   local url="$1"
   local body="$2"
-  if [[ -n "$AUTH_HEADER" ]]; then
-    curl -sf -H "$AUTH_HEADER" -H "Content-Type: application/json" -d "$body" "$url"
+  local tmpfile
+  tmpfile=$(mktemp)
+  local args=(-s -o "$tmpfile" -w '%{http_code}' -H "Content-Type: application/json" -d "$body")
+  [[ -n "$AUTH_HEADER" ]] && args+=(-H "$AUTH_HEADER")
+  local http_code exit_status=0
+  http_code=$(curl "${args[@]}" "$url")
+  if [[ "$http_code" -lt 200 || "$http_code" -ge 300 ]]; then
+    echo "Error: API request failed (HTTP ${http_code})" >&2
+    exit_status=1
   else
-    curl -sf -H "Content-Type: application/json" -d "$body" "$url"
+    cat "$tmpfile"
   fi
+  rm -f "$tmpfile"
+  return "$exit_status"
 }
 
 # Multi-seed mode
