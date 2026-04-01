@@ -25,7 +25,7 @@ Get recommended papers for a single seed paper.
 
 | Param | Type | Description |
 |-------|------|-------------|
-| `paper_id` | string | **Required.** Semantic Scholar paper ID (SHA format) |
+| `paper_id` | string | **Required.** Semantic Scholar paper ID (SHA format only — not DOI/ARXIV) |
 
 **Query parameters**:
 
@@ -36,8 +36,8 @@ Get recommended papers for a single seed paper.
 | `from` | string | `recent` | — | Recommendation pool: `recent` or `all-cs` |
 
 **`from` values**:
-- `recent` — recommendations drawn from recently published papers
-- `all-cs` — recommendations drawn from all Computer Science papers
+- `recent` — recommendations drawn from recently published papers (any field)
+- `all-cs` — recommendations drawn from all Computer Science papers only. **Do not use for non-CS research topics.**
 
 ---
 
@@ -61,7 +61,7 @@ Get recommendations based on positive and negative example paper lists. Useful w
 ```
 
 - `positivePaperIds` — papers representative of what you want
-- `negativePaperIds` — papers representative of what you don't want (optional)
+- `negativePaperIds` — papers representative of what you do not want (optional)
 
 ---
 
@@ -90,8 +90,7 @@ journal, citationStyles, authors
       "title": "Example Paper Title",
       "year": 2023,
       "authors": [{"authorId": "123", "name": "..."}]
-    },
-    ...
+    }
   ]
 }
 ```
@@ -116,15 +115,22 @@ Same as the Academic Graph API:
 
 ---
 
-## Usage Example
+## Usage Examples
 
-Get 10 papers similar to a known paper ID, requesting basic fields:
-```
-GET /papers/forpaper/649def34f8be52c8b66281af98ae884c09aef38b?fields=paperId,title,year,citationCount&limit=10&from=recent
+Single-seed recommendations (10 papers, basic fields):
+
+```bash
+curl -H "x-api-key: $SEMANTIC_SCHOLAR_API_KEY" \
+  "https://api.semanticscholar.org/recommendations/v1/papers/forpaper/649def34f8be52c8b66281af98ae884c09aef38b?fields=paperId,title,year,citationCount&limit=10&from=recent"
 ```
 
-Get recommendations between two positive examples:
+Multi-seed recommendations (positive examples only):
+
+```bash
+curl -s -X POST \
+  -H "x-api-key: $SEMANTIC_SCHOLAR_API_KEY" \
+  -H "Content-Type: application/json" \
+  "https://api.semanticscholar.org/recommendations/v1/papers/?fields=paperId,title,year&limit=20" \
+  -d '{"positivePaperIds": ["abc123", "def456"]}'
 ```
-POST /papers/?fields=paperId,title,year&limit=20
-Body: { "positivePaperIds": ["abc123", "def456"] }
-```
+
