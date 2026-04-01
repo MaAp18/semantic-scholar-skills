@@ -273,6 +273,8 @@ Full-text search over ~500-word paper chunks. Returns the highest-ranked snippet
 
 ### Paper Fields
 
+> **Tip:** For most tasks, use the prebuilt field sets in `SKILL.md` (`paperId,title,abstract,year,authors` for basics; `paperId,title,abstract,year,venue,publicationDate,citationCount,referenceCount,isOpenAccess,openAccessPdf,fieldsOfStudy,authors` for full detail). Request only the fields you need — responses exceeding 10 MB will return a `400` error.
+
 ```
 paperId               corpusId              externalIds
 url                   title                 abstract
@@ -359,6 +361,8 @@ Editorial, LettersAndComments, MetaAnalysis, News, Study, Book, BookSection
 
 ### `fieldsOfStudy`
 
+Values are **case-sensitive** and must match exactly. Pass multiple values as a comma-separated string.
+
 ```
 Computer Science, Medicine, Chemistry, Biology, Materials Science, Physics,
 Geology, Psychology, Art, History, Geography, Sociology, Business,
@@ -419,3 +423,4 @@ Environmental Science, Agricultural and Food Sciences, Education, Law, Linguisti
 | `400` | Bad query, unsupported fields, or response > 10 MB |
 | `403` | Invalid or expired API key |
 | `404` | Paper or author not found |
+
