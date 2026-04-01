@@ -28,6 +28,8 @@ OPTIONS:
   --bulk              Use bulk (cursor-based) search instead of relevance search
   --sort <field:order> Sort for bulk search (e.g. "citationCount:desc")
   --token <cursor>    Continuation token for bulk search pagination
+  --match             Title-match mode: return the single best-matching paper
+                      (uses /paper/search/match; ignores --limit, --offset, filters)
   -h, --help          Show this help
 
 ENVIRONMENT:
@@ -38,6 +40,7 @@ EXAMPLES:
   $(basename "$0") --limit 5 --year "2020:2024" "transformer architecture"
   $(basename "$0") --fields-of-study "Computer Science" --min-citations 100 "neural networks"
   $(basename "$0") --bulk --sort "citationCount:desc" --limit 50 "BERT"
+  $(basename "$0") --match "Attention Is All You Need"
 EOF
   exit 0
 }
@@ -56,6 +59,7 @@ VENUE=""
 BULK=false
 SORT="paperId:asc"
 TOKEN=""
+MATCH=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -72,6 +76,7 @@ while [[ $# -gt 0 ]]; do
     --bulk) BULK=true; shift ;;
     --sort) SORT="$2"; shift 2 ;;
     --token) TOKEN="$2"; shift 2 ;;
+    --match) MATCH=true; shift ;;
     -*) echo "Unknown option: $1" >&2; exit 1 ;;
     *) QUERY="$1"; shift ;;
   esac
@@ -95,9 +100,29 @@ if [[ -n "${SEMANTIC_SCHOLAR_API_KEY:-}" ]]; then
   AUTH_HEADER="x-api-key: ${SEMANTIC_SCHOLAR_API_KEY}"
 fi
 
+curl_get() {
+  local url="$1"
+  local tmpfile
+  tmpfile=$(mktemp)
+  local args=(-s -o "$tmpfile" -w '%{http_code}')
+  [[ -n "$AUTH_HEADER" ]] && args+=(-H "$AUTH_HEADER")
+  local http_code exit_status=0
+  http_code=$(curl "${args[@]}" "$url")
+  if [[ "$http_code" -lt 200 || "$http_code" -ge 300 ]]; then
+    echo "Error: API request failed (HTTP ${http_code})" >&2
+    exit_status=1
+  else
+    cat "$tmpfile"
+  fi
+  rm -f "$tmpfile"
+  return "$exit_status"
+}
+
 ENCODED_QUERY=$(urlencode "$QUERY")
 
-if [[ "$BULK" == "true" ]]; then
+if [[ "$MATCH" == "true" ]]; then
+  URL="${GRAPH_API}/paper/search/match?query=${ENCODED_QUERY}&fields=${FIELDS}"
+elif [[ "$BULK" == "true" ]]; then
   ENDPOINT="${GRAPH_API}/paper/search/bulk"
   URL="${ENDPOINT}?query=${ENCODED_QUERY}&fields=${FIELDS}&sort=${SORT}&limit=${LIMIT}"
   [[ -n "$YEAR" ]] && URL="${URL}&year=$(urlencode "$YEAR")"
@@ -118,8 +143,4 @@ else
   [[ -n "$VENUE" ]] && URL="${URL}&venue=$(urlencode "$VENUE")"
 fi
 
-if [[ -n "$AUTH_HEADER" ]]; then
-  curl -sf -H "$AUTH_HEADER" "$URL"
-else
-  curl -sf "$URL"
-fi
+curl_get "$URL"
